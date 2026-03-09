@@ -20,10 +20,29 @@
       "package": "com.familytasks.app"
     },
     "web": {
-      "bundler": "metro"
-    },
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+},
     "plugins": [
-      "expo-font"
-    ]
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Nunito-Regular.ttf",
+            "./assets/fonts/Nunito-SemiBold.ttf",
+            "./assets/fonts/Nunito-Bold.ttf",
+            "./assets/fonts/Nunito-ExtraBold.ttf",
+            "./assets/fonts/Nunito-Black.ttf",
+            "./assets/fonts/SpaceMono-Regular.ttf",
+            "./assets/fonts/SpaceMono-Bold.ttf"
+          ]
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "3f74a427-0e5a-4134-9be6-94a2763ea3a3"
+      }
+    }
   }
 }
