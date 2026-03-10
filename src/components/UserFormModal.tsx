@@ -17,9 +17,10 @@ interface Props {
 
 export const UserFormModal: React.FC<Props> = ({ visible, user, onClose }) => {
   const { addUser, updateUser } = useStore();
-  const blank = { name: '', avatar: '👦', role: 'member' as const, color: ROLE_COLORS[0] };
+  const blank: { name: string; avatar: string; role: 'admin' | 'member'; color: string; pin: string } = 
+  { name: '', avatar: '👦', role: 'member', color: ROLE_COLORS[0], pin: '' };
   const [form, setForm] = useState(user ? {
-    name: user.name, avatar: user.avatar, role: user.role, color: user.color,
+    name: user.name, avatar: user.avatar, role: user.role, color: user.color, pin: user.pin ?? '',
   } : blank);
 
   const up = <K extends keyof typeof blank>(k: K, v: typeof blank[K]) =>
@@ -27,10 +28,17 @@ export const UserFormModal: React.FC<Props> = ({ visible, user, onClose }) => {
 
   const handleSave = () => {
     if (!form.name.trim()) return;
+    const data = {
+      name: form.name,
+      avatar: form.avatar,
+      role: form.role,
+      color: form.color,
+      pin: form.role === 'admin' ? form.pin : '',
+    };
     if (user) {
-      updateUser(user.id, form);
+      updateUser(user.id, data);
     } else {
-      addUser(form);
+      addUser(data);
     }
     setForm(blank);
     onClose();
@@ -116,6 +124,26 @@ export const UserFormModal: React.FC<Props> = ({ visible, user, onClose }) => {
               ))}
             </View>
           </View>
+
+          {/* PIN — solo si es admin */}
+          {form.role === 'admin' && (
+            <View style={styles.group}>
+              <Text style={styles.label}>PIN de acceso 🔐</Text>
+              <TextInput
+                style={styles.input}
+                value={form.pin}
+                onChangeText={v => up('pin', v.replace(/[^0-9]/g, '').slice(0, 6))}
+                placeholder="Ej: 1234"
+                placeholderTextColor={Colors.textDim}
+                keyboardType="numeric"
+                secureTextEntry
+                maxLength={6}
+              />
+              <Text style={{ fontFamily: Fonts.semibold, fontSize: 11, color: Colors.textDim, marginTop: 4 }}>
+                Se pedirá al cambiar a este perfil. Dejalo vacío para no requerir PIN.
+              </Text>
+            </View>
+          )}
 
           <Divider style={{ marginVertical: 16 }} />
 

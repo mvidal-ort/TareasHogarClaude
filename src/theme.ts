@@ -68,9 +68,8 @@ export const STATUS_MAP = {
 export const CATEGORY_MAP = {
   limpieza: { label: 'Limpieza', icon: '🧹' },
   cocina:   { label: 'Cocina',   icon: '🍳' },
-  compras:  { label: 'Compras',  icon: '🛒' },
-  mascotas: { label: 'Mascotas', icon: '🐾' },
-  jardín:   { label: 'Jardín',   icon: '🌿' },
+  compras:  { label: 'Compras',  icon: '🛒' },  
+  jardín:   { label: 'Pantas',   icon: '🌿' },
   otros:    { label: 'Otros',    icon: '📋' },
 } as const;
 

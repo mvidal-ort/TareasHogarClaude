@@ -8,6 +8,7 @@ export interface User {
   role: Role;
   points: number;
   color: string;
+  pin?: string;
 }
 
 export interface Task {
@@ -46,12 +47,11 @@ export const INITIAL_USERS: User[] = [
 export const INITIAL_TASKS: Task[] = [
   { id: 1, title: 'Lavar los platos',   desc: 'Después del almuerzo',   assignee: 3, due: today,     priority: 'alta',  status: 'pendiente',   category: 'cocina',   points: 30, comments: [],           repeat: 'diaria'  },
   { id: 2, title: 'Barrer el piso',     desc: 'Sala y comedor',         assignee: 4, due: today,     priority: 'media', status: 'completada',  category: 'limpieza', points: 25, comments: ['¡Listo! 🎉'], repeat: 'diaria'  },
-  { id: 3, title: 'Compras del súper',  desc: 'Lista en la heladera',   assignee: 2, due: tomorrow,  priority: 'alta',  status: 'en_progreso', category: 'compras',  points: 50, comments: [],           repeat: 'semanal' },
-  { id: 4, title: 'Alimentar al perro', desc: 'Mañana y tarde',         assignee: 3, due: today,     priority: 'alta',  status: 'completada',  category: 'mascotas', points: 20, comments: [],           repeat: 'diaria'  },
-  { id: 5, title: 'Sacar la basura',    desc: '',                       assignee: 1, due: today,     priority: 'media', status: 'pendiente',   category: 'limpieza', points: 15, comments: [],           repeat: 'diaria'  },
-  { id: 6, title: 'Regar las plantas',  desc: 'Las del balcón también', assignee: 1, due: yesterday, priority: 'baja',  status: 'vencida',     category: 'jardín',   points: 20, comments: [],           repeat: 'semanal' },
-  { id: 7, title: 'Limpiar el baño',    desc: 'Piso, inodoro y espejo', assignee: 4, due: tomorrow,  priority: 'alta',  status: 'pendiente',   category: 'limpieza', points: 40, comments: [],           repeat: 'semanal' },
-  { id: 8, title: 'Doblar la ropa',     desc: 'La del lavarropas',      assignee: 2, due: today,     priority: 'baja',  status: 'pendiente',   category: 'limpieza', points: 20, comments: [],           repeat: null      },
+  { id: 3, title: 'Compras del súper',  desc: 'Lista en la heladera',   assignee: 2, due: tomorrow,  priority: 'alta',  status: 'en_progreso', category: 'compras',  points: 50, comments: [],           repeat: 'semanal' },  
+  { id: 4, title: 'Sacar la basura',    desc: '',                       assignee: 1, due: today,     priority: 'media', status: 'pendiente',   category: 'limpieza', points: 15, comments: [],           repeat: 'diaria'  },
+  { id: 5, title: 'Regar las plantas',  desc: 'Las del balcón también', assignee: 1, due: yesterday, priority: 'baja',  status: 'vencida',     category: 'jardín',   points: 20, comments: [],           repeat: 'semanal' },
+  { id: 6, title: 'Limpiar el baño',    desc: 'Piso, inodoro y espejo', assignee: 4, due: tomorrow,  priority: 'alta',  status: 'pendiente',   category: 'limpieza', points: 40, comments: [],           repeat: 'semanal' },
+  { id: 7, title: 'Doblar la ropa',     desc: 'La del lavarropas',      assignee: 2, due: today,     priority: 'baja',  status: 'pendiente',   category: 'limpieza', points: 20, comments: [],           repeat: null      },
 ];
 
 export const INITIAL_REWARDS: Reward[] = [
