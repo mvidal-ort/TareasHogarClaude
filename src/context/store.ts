@@ -21,7 +21,7 @@ interface AppState {
   init: () => () => void;
   setCurrentUser: (id: number) => void;
 
-  addUser: (user: Omit<User, 'id' | 'points'>) => Promise<void>;
+  addUser: (user: Omit<User, 'id' | 'points' | 'weeklyPoints'>) => Promise<void>;
   updateUser: (id: number, data: Partial<User>) => Promise<void>;
   deleteUser: (id: number) => Promise<void>;
 
@@ -32,12 +32,17 @@ interface AppState {
   addComment: (taskId: number, comment: string) => Promise<void>;
 
   awardPoints: (userId: number, pts: number) => Promise<void>;
+  resetWeeklyRanking: () => Promise<void>;
+
+  addReward: (data: Omit<Reward, 'id'>) => Promise<void>;
+  updateReward: (id: number, data: Partial<Reward>) => Promise<void>;
+  deleteReward: (id: number) => Promise<void>;
 }
 
 export const useStore = create<AppState>()((set, get) => ({
   users: [],
   tasks: [],
-  rewards: INITIAL_REWARDS,
+  rewards: [],
   currentUserId: 1,
   hydrated: false,
 
@@ -67,14 +72,25 @@ export const useStore = create<AppState>()((set, get) => ({
       }
     });
 
-    return () => { unsubUsers(); unsubTasks(); };
+    const unsubRewards = onSnapshot(collection(db, 'rewards'), async snap => {
+      if (snap.empty) {
+        const batch = writeBatch(db);
+        INITIAL_REWARDS.forEach(r => batch.set(doc(db, 'rewards', String(r.id)), r));
+        await batch.commit();
+      } else {
+        const rewards = snap.docs.map(d => d.data() as Reward);
+        set({ rewards });
+      }
+    });
+
+    return () => { unsubUsers(); unsubTasks(); unsubRewards(); };
   },
 
   setCurrentUser: (id) => set({ currentUserId: id }),
 
   addUser: async (data) => {
     const id = Date.now();
-    await setDoc(doc(db, 'users', String(id)), { ...data, id, points: 0 });
+    await setDoc(doc(db, 'users', String(id)), { ...data, id, points: 0, weeklyPoints: 0 });
   },
 
   updateUser: async (id, data) => {
@@ -132,6 +148,33 @@ export const useStore = create<AppState>()((set, get) => ({
   awardPoints: async (userId, pts) => {
     const user = get().users.find(u => u.id === userId);
     if (!user) return;
-    await setDoc(doc(db, 'users', String(userId)), { ...user, points: user.points + pts });
+    await setDoc(doc(db, 'users', String(userId)), {
+      ...user,
+      points: user.points + pts,
+      weeklyPoints: (user.weeklyPoints ?? 0) + pts,
+    });
+  },
+
+  resetWeeklyRanking: async () => {
+    const batch = writeBatch(db);
+    get().users.forEach(u => {
+      batch.set(doc(db, 'users', String(u.id)), { ...u, weeklyPoints: 0 });
+    });
+    await batch.commit();
+  },
+
+  addReward: async (data) => {
+    const id = Date.now();
+    await setDoc(doc(db, 'rewards', String(id)), { ...data, id });
+  },
+
+  updateReward: async (id, data) => {
+    const reward = get().rewards.find(r => r.id === id);
+    if (!reward) return;
+    await setDoc(doc(db, 'rewards', String(id)), { ...reward, ...data });
+  },
+
+  deleteReward: async (id) => {
+    await deleteDoc(doc(db, 'rewards', String(id)));
   },
 }));
