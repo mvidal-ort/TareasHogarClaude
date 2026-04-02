@@ -14,12 +14,13 @@ import type { Task } from '../data/models';
 
 type FilterMode = 'mine' | 'all';
 
-interface Props {
-  navigation?: any;
-  route?: any;
-}
+const FilterChip: React.FC<{ label: string; active: boolean; onPress: () => void }> = ({ label, active, onPress }) => (
+  <TouchableOpacity onPress={onPress} style={[fStyles.chip, active ? fStyles.chipActive : {}]}>
+    <Text style={[fStyles.chipText, active ? fStyles.chipTextActive : {}]}>{label}</Text>
+  </TouchableOpacity>
+);
 
-export const TasksListScreen: React.FC<Props> = () => {
+export const TasksListScreen: React.FC = () => {
   const { tasks, users, currentUser, toggleTaskComplete, deleteTask, isAdmin } = useStore(s => ({
     tasks: s.tasks,
     users: s.users,
@@ -30,22 +31,22 @@ export const TasksListScreen: React.FC<Props> = () => {
   }));
 
   const [mode, setMode] = useState<FilterMode>('mine');
-  const [filterUser, setFilterUser]   = useState<string>('all');
+  const [filterUser, setFilterUser]     = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterCat, setFilterCat]     = useState<string>('all');
-  const [search, setSearch]           = useState('');
-
-  const [showForm, setShowForm]     = useState(false);
-  console.log('showForm:', showForm);
-  const [editTask, setEditTask]     = useState<Task | undefined>();
-  const [detailTask, setDetailTask] = useState<Task | null>(null);
+  const [filterCat, setFilterCat]       = useState<string>('all');
+  const [search, setSearch]             = useState('');
+  const [showForm, setShowForm]         = useState(false);
+  const [editTask, setEditTask]         = useState<Task | undefined>();
+  const [detailTask, setDetailTask]     = useState<Task | null>(null);
 
   const filtered = useMemo(() => {
-    let list = mode === 'mine' ? tasks.filter(t => t.assignee === currentUser.id) : [...tasks];
-    if (filterUser  !== 'all') list = list.filter(t => t.assignee === Number(filterUser));
+    let list = mode === 'mine'
+      ? tasks.filter(t => t.assignee === currentUser.id)
+      : [...tasks];
+    if (filterUser   !== 'all') list = list.filter(t => t.assignee === Number(filterUser));
     if (filterStatus !== 'all') list = list.filter(t => t.status === filterStatus);
-    if (filterCat   !== 'all') list = list.filter(t => t.category === filterCat);
-    if (search.trim())         list = list.filter(t => t.title.toLowerCase().includes(search.toLowerCase()));
+    if (filterCat    !== 'all') list = list.filter(t => t.category === filterCat);
+    if (search.trim())          list = list.filter(t => t.title.toLowerCase().includes(search.toLowerCase()));
     return list.sort((a, b) => {
       const order: Record<string, number> = { vencida: 0, alta: 1, media: 2, baja: 3 };
       return (order[a.status === 'vencida' ? 'vencida' : a.priority] ?? 9) -
@@ -53,21 +54,15 @@ export const TasksListScreen: React.FC<Props> = () => {
     });
   }, [tasks, mode, filterUser, filterStatus, filterCat, search, currentUser.id]);
 
-  const FilterChip: React.FC<{ label: string; active: boolean; onPress: () => void }> = ({ label, active, onPress }) => (
-    <TouchableOpacity onPress={onPress} style={[fStyles.chip, active && fStyles.chipActive]}>
-      <Text style={[fStyles.chipText, active && fStyles.chipTextActive]}>{label}</Text>
-    </TouchableOpacity>
-  );
-
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Tabs */}
       <View style={styles.tabBar}>
-        <TouchableOpacity onPress={() => setMode('mine')} style={[styles.tab, mode === 'mine' && styles.tabActive]}>
-          <Text style={[styles.tabText, mode === 'mine' && styles.tabTextActive]}>📋 Mis tareas</Text>
+        <TouchableOpacity onPress={() => setMode('mine')} style={[styles.tab, mode === 'mine' ? styles.tabActive : {}]}>
+          <Text style={[styles.tabText, mode === 'mine' ? styles.tabTextActive : {}]}>📋 Mis tareas</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setMode('all')} style={[styles.tab, mode === 'all' && styles.tabActive]}>
-          <Text style={[styles.tabText, mode === 'all' && styles.tabTextActive]}>📊 Todas</Text>
+        <TouchableOpacity onPress={() => setMode('all')} style={[styles.tab, mode === 'all' ? styles.tabActive : {}]}>
+          <Text style={[styles.tabText, mode === 'all' ? styles.tabTextActive : {}]}>📊 Todas</Text>
         </TouchableOpacity>
       </View>
 
@@ -151,10 +146,7 @@ export const TasksListScreen: React.FC<Props> = () => {
 const styles = StyleSheet.create({
   safe:    { flex: 1, backgroundColor: Colors.bg },
   tabBar:  { flexDirection: 'row', backgroundColor: Colors.surface, paddingHorizontal: Spacing.lg, paddingTop: 8, gap: 4 },
-  tab: {
-    flex: 1, paddingVertical: 10, borderRadius: Radii.md,
-    alignItems: 'center', marginBottom: 8,
-  },
+  tab:           { flex: 1, paddingVertical: 10, borderRadius: Radii.md, alignItems: 'center', marginBottom: 8 },
   tabActive:     { backgroundColor: Colors.card },
   tabText:       { fontFamily: Fonts.extrabold, fontSize: 13, color: Colors.textMuted },
   tabTextActive: { color: Colors.text },
@@ -168,24 +160,18 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: Colors.border, color: Colors.text,
     fontFamily: Fonts.semibold, fontSize: 14, paddingHorizontal: 12, paddingVertical: 9,
   },
-  filtersWrap: { backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border, maxHeight: 52 },
-  filters: { paddingHorizontal: Spacing.lg, paddingVertical: 8, gap: 6, flexDirection: 'row', alignItems: 'center' },
+  filtersWrap:   { backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border, maxHeight: 52 },
+  filters:       { paddingHorizontal: Spacing.lg, paddingVertical: 8, gap: 6, flexDirection: 'row', alignItems: 'center' },
   filterDivider: { width: 1, height: 20, backgroundColor: Colors.border, marginHorizontal: 4 },
-  countRow: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: Spacing.lg, paddingVertical: 8,
-  },
-  countText: { fontFamily: Fonts.semibold, fontSize: 12, color: Colors.textMuted },
-  clearText: { fontFamily: Fonts.bold, fontSize: 12, color: Colors.red },
-  list:        { flex: 1 },
-  listContent: { padding: Spacing.lg, paddingBottom: 32 },
+  countRow:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.lg, paddingVertical: 8 },
+  countText:     { fontFamily: Fonts.semibold, fontSize: 12, color: Colors.textMuted },
+  clearText:     { fontFamily: Fonts.bold, fontSize: 12, color: Colors.red },
+  list:          { flex: 1 },
+  listContent:   { padding: Spacing.lg, paddingBottom: 32 },
 });
 
 const fStyles = StyleSheet.create({
-  chip: {
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: Radii.full,
-    backgroundColor: Colors.card, borderWidth: 1, borderColor: Colors.border,
-  },
+  chip:           { paddingHorizontal: 12, paddingVertical: 6, borderRadius: Radii.full, backgroundColor: Colors.card, borderWidth: 1, borderColor: Colors.border },
   chipActive:     { backgroundColor: Colors.accentGlow, borderColor: Colors.accent },
   chipText:       { fontFamily: Fonts.bold, fontSize: 12, color: Colors.textMuted },
   chipTextActive: { color: Colors.accentLight },

@@ -9,7 +9,7 @@ import { RewardFormModal } from '../components/RewardFormModal';
 import type { Reward } from '../data/models';
 
 export const RankingScreen: React.FC = () => {
-  const { users, tasks, rewards, currentUser, isAdmin, awardPoints, deleteReward, resetWeeklyRanking } = useStore(s => ({
+  const { users, tasks, rewards, currentUser, isAdmin, awardPoints, deleteReward, resetWeeklyRanking, resetAllPoints } = useStore(s => ({
     users: s.users,
     tasks: s.tasks,
     rewards: s.rewards,
@@ -18,6 +18,7 @@ export const RankingScreen: React.FC = () => {
     awardPoints: s.awardPoints,
     deleteReward: s.deleteReward,
     resetWeeklyRanking: s.resetWeeklyRanking,
+    resetAllPoints: s.resetAllPoints,
   }));
 
   const [showForm, setShowForm] = useState(false);
@@ -46,16 +47,17 @@ export const RankingScreen: React.FC = () => {
     ]);
   };
 
-  const handleResetWeekly = () => {
-    Alert.alert(
-      '🔄 Resetear ranking semanal',
-      'Los puntos semanales de todos volverán a 0. Los puntos totales para canjear recompensas NO se modifican.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Resetear', style: 'destructive', onPress: () => resetWeeklyRanking() },
-      ]
-    );
-  };
+const handleResetWeekly = () => {
+  if (window.confirm('🔄 Los puntos semanales volverán a 0. ¿Confirmás?')) {
+    resetWeeklyRanking();
+  }
+};
+
+const handleResetAllPoints = () => {
+  if (window.confirm('⚠️ Se eliminarán TODOS los puntos acumulados y semanales. ¿Confirmás?')) {
+    resetAllPoints();
+  }
+};
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -68,14 +70,22 @@ export const RankingScreen: React.FC = () => {
           <Text style={styles.heroSub}>¡Completá tareas para ganar puntos esta semana!</Text>
         </View>
 
-        {/* Reset button — solo admin */}
+        {/* Reset buttons — solo admin */}
         {isAdmin && (
-          <Btn
-            label="🔄 Resetear ranking semanal"
-            variant="ghost"
-            onPress={handleResetWeekly}
-            style={{ marginBottom: 16 }}
-          />
+          <View style={styles.adminBtns}>
+            <Btn
+              label="🔄 Resetear ranking semanal"
+              variant="ghost"
+              onPress={handleResetWeekly}
+              style={{ flex: 1 }}
+            />
+            <Btn
+              label="⚠️ Resetear todos los puntos"
+              variant="danger"
+              onPress={handleResetAllPoints}
+              style={{ flex: 1 }}
+            />
+          </View>
         )}
 
         {/* Podium */}
@@ -196,6 +206,8 @@ const styles = StyleSheet.create({
   heroIcon:  { fontSize: 56 },
   heroTitle: { fontFamily: Fonts.black, fontSize: 26, color: Colors.text },
   heroSub:   { fontFamily: Fonts.semibold, fontSize: 14, color: Colors.textMuted, textAlign: 'center' },
+
+  adminBtns: { flexDirection: 'row', gap: 8, marginBottom: 16 },
 
   podium:       { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: 8, marginBottom: 24 },
   podiumSlot:   { alignItems: 'center', gap: 6, padding: 12, borderRadius: Radii.lg, borderWidth: 1, flex: 1 },

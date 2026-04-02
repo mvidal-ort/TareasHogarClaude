@@ -27,8 +27,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   const isCompleted = task.status === 'completada';
   const pr = PRIORITY_MAP[task.priority];
   const st = STATUS_MAP[task.status];
-  const cat = CATEGORY_MAP[task.category];
-
+  const cat = CATEGORY_MAP[task.category] ?? { label: task.category, icon: '📋' };
   return (
     <TouchableOpacity
       onPress={onPress}

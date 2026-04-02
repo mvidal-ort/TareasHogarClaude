@@ -33,6 +33,7 @@ interface AppState {
 
   awardPoints: (userId: number, pts: number) => Promise<void>;
   resetWeeklyRanking: () => Promise<void>;
+  resetAllPoints: () => Promise<void>;
 
   addReward: (data: Omit<Reward, 'id'>) => Promise<void>;
   updateReward: (id: number, data: Partial<Reward>) => Promise<void>;
@@ -159,6 +160,15 @@ export const useStore = create<AppState>()((set, get) => ({
     const batch = writeBatch(db);
     get().users.forEach(u => {
       batch.set(doc(db, 'users', String(u.id)), { ...u, weeklyPoints: 0 });
+    });
+    await batch.commit();
+  },
+
+  resetAllPoints: async () => {
+    console.log('reseteando puntos, usuarios:', get().users.map(u => u.name));
+    const batch = writeBatch(db);
+    get().users.forEach(u => {
+      batch.set(doc(db, 'users', String(u.id)), { ...u, points: 0, weeklyPoints: 0 });
     });
     await batch.commit();
   },
