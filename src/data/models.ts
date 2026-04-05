@@ -26,6 +26,14 @@ export interface Task {
   repeat: 'diaria' | 'semanal' | null;
 }
 
+export interface TaskTemplate {
+  id: number;
+  title: string;
+  desc: string;
+  category: Category;
+  points: number;
+}
+
 export interface Reward {
   id: number;
   name: string;
@@ -61,4 +69,14 @@ export const INITIAL_REWARDS: Reward[] = [
   { id: 3, name: 'Día sin tareas',       points: 500, icon: '😴' },
   { id: 4, name: 'Salida al parque',     points: 150, icon: '🌳' },
   { id: 5, name: 'Jugar videojuegos 1h', points: 200, icon: '🎮' },
+];
+
+export const INITIAL_TEMPLATES: TaskTemplate[] = [
+  { id: 1, title: 'Lavar los platos',   desc: 'Después del almuerzo',    category: 'cocina',   points: 30 },
+  { id: 2, title: 'Barrer el piso',     desc: 'Sala y comedor',          category: 'limpieza', points: 25 },
+  { id: 3, title: 'Compras del súper',  desc: 'Lista en la heladera',    category: 'compras',  points: 50 },
+  { id: 4, title: 'Sacar la basura',    desc: '',                        category: 'limpieza', points: 15 },
+  { id: 5, title: 'Regar las plantas',  desc: 'Las del balcón también',  category: 'jardín',   points: 20 },
+  { id: 6, title: 'Limpiar el baño',    desc: 'Piso, inodoro y espejo',  category: 'limpieza', points: 40 },
+  { id: 7, title: 'Doblar la ropa',     desc: 'La del lavarropas',       category: 'limpieza', points: 20 },
 ];

@@ -9,7 +9,7 @@ import { RewardFormModal } from '../components/RewardFormModal';
 import type { Reward } from '../data/models';
 
 export const RankingScreen: React.FC = () => {
-  const { users, tasks, rewards, currentUser, isAdmin, awardPoints, deleteReward, resetWeeklyRanking, resetAllPoints } = useStore(s => ({
+  const { users, tasks, rewards, currentUser, isAdmin, awardPoints, deleteReward, resetWeek, resetAllPoints } = useStore(s => ({
     users: s.users,
     tasks: s.tasks,
     rewards: s.rewards,
@@ -17,7 +17,7 @@ export const RankingScreen: React.FC = () => {
     isAdmin: s.isAdmin(),
     awardPoints: s.awardPoints,
     deleteReward: s.deleteReward,
-    resetWeeklyRanking: s.resetWeeklyRanking,
+    resetWeek: s.resetWeek,
     resetAllPoints: s.resetAllPoints,
   }));
 
@@ -47,17 +47,17 @@ export const RankingScreen: React.FC = () => {
     ]);
   };
 
-const handleResetWeekly = () => {
-  if (window.confirm('🔄 Los puntos semanales volverán a 0. ¿Confirmás?')) {
-    resetWeeklyRanking();
-  }
-};
+  const handleResetWeekly = () => {
+    if (window.confirm('🔄 Se eliminarán TODAS las tareas y los puntos semanales volverán a 0. Los puntos totales NO se modifican. ¿Confirmás?')) {
+      resetWeek();
+    }
+  };
 
-const handleResetAllPoints = () => {
-  if (window.confirm('⚠️ Se eliminarán TODOS los puntos acumulados y semanales. ¿Confirmás?')) {
-    resetAllPoints();
-  }
-};
+  const handleResetAllPoints = () => {
+    if (window.confirm('⚠️ Se eliminarán TODOS los puntos acumulados y semanales. ¿Confirmás?')) {
+      resetAllPoints();
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -74,7 +74,7 @@ const handleResetAllPoints = () => {
         {isAdmin && (
           <View style={styles.adminBtns}>
             <Btn
-              label="🔄 Resetear ranking semanal"
+              label="🔄 Nueva semana"
               variant="ghost"
               onPress={handleResetWeekly}
               style={{ flex: 1 }}

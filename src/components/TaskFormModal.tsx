@@ -4,10 +4,9 @@ import {
   View, Text, TextInput, ScrollView, StyleSheet,
   Modal, TouchableOpacity,
 } from 'react-native';
-import { Colors, Fonts, Radii, Spacing, CATEGORY_MAP, PRIORITY_MAP } from '../theme';
-import { Btn, Divider } from './UI';
+import { Colors, Fonts, Radii, Spacing, CATEGORY_MAP } from '../theme';
 import { useStore } from '../context/store';
-import type { Task } from '../data/models';
+import type { Task, TaskTemplate } from '../data/models';
 
 type TaskFormData = Omit<Task, 'id' | 'comments'>;
 
@@ -19,8 +18,17 @@ interface Props {
 
 const today = new Date().toISOString().split('T')[0];
 
+function findSimilar(title: string, templates: TaskTemplate[]): TaskTemplate[] {
+  if (!title.trim()) return [];
+  const words = title.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+  return templates.filter(t => {
+    const tWords = t.title.toLowerCase();
+    return words.some(w => tWords.includes(w));
+  });
+}
+
 export const TaskFormModal: React.FC<Props> = ({ visible, task, onClose }) => {
-  const { users, addTask, updateTask } = useStore();
+  const { users, templates, addTask, updateTask, addTemplate } = useStore();
 
   const blank: TaskFormData = {
     title: '', desc: '', assignee: users[0]?.id ?? 1,
@@ -34,19 +42,51 @@ export const TaskFormModal: React.FC<Props> = ({ visible, task, onClose }) => {
     category: task.category, points: task.points, repeat: task.repeat,
   } : blank);
 
-  const up = <K extends keyof TaskFormData>(k: K, v: TaskFormData[K]) =>
-    setForm(f => ({ ...f, [k]: v }));
+  const [suggestions, setSuggestions] = useState<TaskTemplate[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
- const handleSave = () => {
-  if (!form.title.trim()) return;
-  if (task) {
-    updateTask(task.id, form);
-  } else {
-    addTask(form);    
-  }
-  setForm(blank);
-  onClose();
-};
+  const up = <K extends keyof TaskFormData>(k: K, v: TaskFormData[K]) => {
+    setForm(f => ({ ...f, [k]: v }));
+    if (k === 'title' && !task) {
+      const similar = findSimilar(v as string, templates);
+      setSuggestions(similar);
+      setShowSuggestions(similar.length > 0);
+    }
+  };
+
+  const useSuggestion = (t: TaskTemplate) => {
+    setForm(f => ({
+      ...f,
+      title: t.title,
+      desc: t.desc,
+      category: t.category as any,
+      points: t.points,
+    }));
+    setShowSuggestions(false);
+  };
+
+  const handleSave = async () => {
+    if (!form.title.trim()) return;
+    if (task) {
+      updateTask(task.id, form);
+    } else {
+      addTask(form);
+      // Guardar en biblioteca si no existe igual
+      const exists = templates.some(t => t.title.toLowerCase() === form.title.toLowerCase());
+      if (!exists) {
+        await addTemplate({
+          title: form.title,
+          desc: form.desc,
+          category: form.category,
+          points: form.points,
+        });
+      }
+    }
+    setForm(blank);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    onClose();
+  };
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -68,6 +108,32 @@ export const TaskFormModal: React.FC<Props> = ({ visible, task, onClose }) => {
               placeholder="¿Qué hay que hacer?"
               placeholderTextColor={Colors.textDim}
             />
+            {/* Sugerencias de la biblioteca */}
+            {showSuggestions && (
+              <View style={styles.suggestionsBox}>
+                <Text style={styles.suggestionsTitle}>📋 Tareas similares en la biblioteca:</Text>
+                {suggestions.map(s => {
+                  const cat = CATEGORY_MAP[s.category] ?? { icon: '📋', label: s.category };
+                  return (
+                    <TouchableOpacity
+                      key={s.id}
+                      style={styles.suggestionRow}
+                      onPress={() => useSuggestion(s)}
+                    >
+                      <Text style={styles.suggestionIcon}>{cat.icon}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.suggestionTitle}>{s.title}</Text>
+                        <Text style={styles.suggestionMeta}>{cat.label} · ⭐ {s.points} pts</Text>
+                      </View>
+                      <Text style={styles.suggestionUse}>Usar →</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+                <TouchableOpacity onPress={() => setShowSuggestions(false)} style={styles.dismissBtn}>
+                  <Text style={styles.dismissText}>Ignorar sugerencias</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           <View style={styles.group}>
@@ -215,4 +281,14 @@ const styles = StyleSheet.create({
   saveBtn:     { flex: 2, backgroundColor: Colors.accent },
   saveText:    { fontFamily: Fonts.bold, fontSize: 14, color: '#fff' },
   disabled:    { opacity: 0.4 },
+
+  suggestionsBox:   { marginTop: 8, backgroundColor: Colors.surface, borderRadius: Radii.md, borderWidth: 1, borderColor: Colors.accent, padding: 10 },
+  suggestionsTitle: { fontFamily: Fonts.extrabold, fontSize: 11, color: Colors.accentLight, marginBottom: 8 },
+  suggestionRow:    { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: Colors.border },
+  suggestionIcon:   { fontSize: 22 },
+  suggestionTitle:  { fontFamily: Fonts.bold, fontSize: 13, color: Colors.text },
+  suggestionMeta:   { fontFamily: Fonts.semibold, fontSize: 11, color: Colors.textMuted },
+  suggestionUse:    { fontFamily: Fonts.bold, fontSize: 12, color: Colors.accentLight },
+  dismissBtn:       { marginTop: 8, alignItems: 'center' },
+  dismissText:      { fontFamily: Fonts.semibold, fontSize: 12, color: Colors.textDim },
 });

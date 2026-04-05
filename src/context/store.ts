@@ -5,13 +5,14 @@ import {
   collection, doc, setDoc, deleteDoc,
   onSnapshot, writeBatch
 } from 'firebase/firestore';
-import { INITIAL_USERS, INITIAL_TASKS, INITIAL_REWARDS } from '../data/models';
-import type { User, Task, Reward } from '../data/models';
+import { INITIAL_USERS, INITIAL_TASKS, INITIAL_REWARDS, INITIAL_TEMPLATES } from '../data/models';
+import type { User, Task, Reward, TaskTemplate } from '../data/models';
 
 interface AppState {
   users: User[];
   tasks: Task[];
   rewards: Reward[];
+  templates: TaskTemplate[];
   currentUserId: number;
   hydrated: boolean;
 
@@ -34,16 +35,23 @@ interface AppState {
   awardPoints: (userId: number, pts: number) => Promise<void>;
   resetWeeklyRanking: () => Promise<void>;
   resetAllPoints: () => Promise<void>;
+  resetWeek: () => Promise<void>;
 
   addReward: (data: Omit<Reward, 'id'>) => Promise<void>;
   updateReward: (id: number, data: Partial<Reward>) => Promise<void>;
   deleteReward: (id: number) => Promise<void>;
+
+  addTemplate: (data: Omit<TaskTemplate, 'id'>) => Promise<void>;
+  updateTemplate: (id: number, data: Partial<TaskTemplate>) => Promise<void>;
+  deleteTemplate: (id: number) => Promise<void>;
+  assignTemplate: (templateId: number, assignee: number, priority: string, due: string, repeat: string | null) => Promise<void>;
 }
 
 export const useStore = create<AppState>()((set, get) => ({
   users: [],
   tasks: [],
   rewards: [],
+  templates: [],
   currentUserId: 1,
   hydrated: false,
 
@@ -84,7 +92,18 @@ export const useStore = create<AppState>()((set, get) => ({
       }
     });
 
-    return () => { unsubUsers(); unsubTasks(); unsubRewards(); };
+    const unsubTemplates = onSnapshot(collection(db, 'templates'), async snap => {
+      if (snap.empty) {
+        const batch = writeBatch(db);
+        INITIAL_TEMPLATES.forEach(t => batch.set(doc(db, 'templates', String(t.id)), t));
+        await batch.commit();
+      } else {
+        const templates = snap.docs.map(d => d.data() as TaskTemplate);
+        set({ templates });
+      }
+    });
+
+    return () => { unsubUsers(); unsubTasks(); unsubRewards(); unsubTemplates(); };
   },
 
   setCurrentUser: (id) => set({ currentUserId: id }),
@@ -165,10 +184,22 @@ export const useStore = create<AppState>()((set, get) => ({
   },
 
   resetAllPoints: async () => {
-    console.log('reseteando puntos, usuarios:', get().users.map(u => u.name));
     const batch = writeBatch(db);
     get().users.forEach(u => {
       batch.set(doc(db, 'users', String(u.id)), { ...u, points: 0, weeklyPoints: 0 });
+    });
+    await batch.commit();
+  },
+
+  resetWeek: async () => {
+    const batch = writeBatch(db);
+    // Resetear puntos semanales
+    get().users.forEach(u => {
+      batch.set(doc(db, 'users', String(u.id)), { ...u, weeklyPoints: 0 });
+    });
+    // Eliminar todas las tareas activas
+    get().tasks.forEach(t => {
+      batch.delete(doc(db, 'tasks', String(t.id)));
     });
     await batch.commit();
   },
@@ -186,5 +217,39 @@ export const useStore = create<AppState>()((set, get) => ({
 
   deleteReward: async (id) => {
     await deleteDoc(doc(db, 'rewards', String(id)));
+  },
+
+  addTemplate: async (data) => {
+    const id = Date.now();
+    await setDoc(doc(db, 'templates', String(id)), { ...data, id });
+  },
+
+  updateTemplate: async (id, data) => {
+    const template = get().templates.find(t => t.id === id);
+    if (!template) return;
+    await setDoc(doc(db, 'templates', String(id)), { ...template, ...data });
+  },
+
+  deleteTemplate: async (id) => {
+    await deleteDoc(doc(db, 'templates', String(id)));
+  },
+
+  assignTemplate: async (templateId, assignee, priority, due, repeat) => {
+    const template = get().templates.find(t => t.id === templateId);
+    if (!template) return;
+    const id = Date.now();
+    await setDoc(doc(db, 'tasks', String(id)), {
+      id,
+      title: template.title,
+      desc: template.desc,
+      category: template.category,
+      points: template.points,
+      assignee,
+      priority,
+      due,
+      repeat: repeat || null,
+      status: 'pendiente',
+      comments: [],
+    });
   },
 }));
